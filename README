@@ -1,0 +1,6 @@
+https://github.com/oscarlab/graphene/issues/32
+
+../../../../Pal/src/host/Linux-SGX/signer/pal-sgx-sign -libpal ../../../../Pal/src/libpal-enclave.so -key ../../../../Pal/src/host/Linux-SGX/signer/enclave-key.pem -output eddsatest.manifest.sgx -exec tests/eddsatest -manifest manifest
+
+
+../../../../Pal/src/host/Linux-SGX/signer/pal-sgx-get-token -output eddsatest.token -sig eddsatest.sig

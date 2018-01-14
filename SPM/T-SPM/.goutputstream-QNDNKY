@@ -1,0 +1,265 @@
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/mm.h>
+#include <asm/uaccess.h>
+#include <asm/traps.h>
+#include <asm/desc_defs.h>
+#include <linux/sched.h>
+#include <linux/moduleparam.h>
+#include <linux/context_tracking.h>     /* exception_enter(), ...       */
+
+#include <linux/delay.h>
+/*
+ *  Copyright (C) 1995  Linus Torvalds
+ *  Copyright (C) 2001, 2002 Andi Kleen, SuSE Labs.
+ *  Copyright (C) 2008-2009, Red Hat Inc., Ingo Molnar
+ */
+#include <linux/sched.h>		/* test_thread_flag(), ...	*/
+#include <linux/kdebug.h>		/* oops_begin/end, ...		*/
+#include <linux/module.h>		/* search_exception_table	*/
+#include <linux/bootmem.h>		/* max_low_pfn			*/
+#include <linux/kprobes.h>		/* NOKPROBE_SYMBOL, ...		*/
+#include <linux/mmiotrace.h>		/* kmmio_handler, ...		*/
+#include <linux/perf_event.h>		/* perf_sw_event		*/
+#include <linux/hugetlb.h>		/* hstate_index_to_shift	*/
+#include <linux/prefetch.h>		/* prefetchw			*/
+#include <linux/context_tracking.h>	/* exception_enter(), ...	*/
+#include <linux/uaccess.h>		/* faulthandler_disabled()	*/
+
+typedef void (*do_page_fault_handler_t)(struct pt_regs *, unsigned long);
+extern void default_do_page_fault(struct pt_regs *regs, unsigned long error_code);
+extern do_page_fault_handler_t do_page_fault_handler;
+
+unsigned long count = 0;
+unsigned long previous_instr_addr = 0;
+
+unsigned long first_address;
+bool flag_first_address = false;
+
+unsigned long count_of_function = 0;
+
+bool flag_clear_access_bit = false;
+
+//struct mm_struct *target_mm = NULL;
+
+static inline void my_flush_tlb_singlepage(unsigned long addr)
+{
+    asm volatile("invlpg (%0)" ::"r" (addr) : "memory");
+}
+
+void clear_access_bit(void)
+{
+	unsigned long addr;
+	pgd_t *pgd;
+    pte_t *ptep, pte, temp_pte;
+    pud_t *pud;
+    pmd_t *pmd;
+	
+	struct mm_struct *target_mm = NULL;
+	struct task_struct * task = NULL;
+
+	while(flag_clear_access_bit)
+	{
+		if(!flag_first_address)
+		{
+			printk("flag_first_address null, sleep one second...\n");
+			msleep(50);
+			continue;
+		}
+		task = current;
+		if ( !task || (strcmp(task->comm, "App") != 0 ) ) 
+			continue;
+
+    	target_mm = task->mm;
+		
+		if(!target_mm)
+		{
+			printk("target_mm NULL...\n");
+			continue;
+		}
+		
+		msleep(50);
+		//struct vm_area_struct *vma = find_vma(target_mm, first_address);
+		{
+			//for(addr = vma->vm_start; addr < vma->vm_end; addr += 0x1000)
+			for(addr = (first_address & 0xfffff000)-0xd8ba0000+0xd892b000; addr < (first_address & 0xfffff000)-0xd8ba0000+0xd893a000; addr += 0x1000)
+			{
+				//if(   ((first_address & 0xfffff000) <= (addr &0xfffff000) + 0xd8ba0000 - 0xd892b000)  && ((first_address & 0xfffff000) >= (addr &0xfffff000) + 0xd8ba0000 - 0xd8939000)  )
+				{
+					pgd = pgd_offset(target_mm, addr);
+					if( !(pgd_none(*pgd) || pgd_bad(*pgd)) )
+					{
+						pud = pud_offset(pgd, addr);
+						if( !(pud_none(*pud) || pud_bad(*pud)) )
+						{	
+							pmd = pmd_offset(pud, addr);
+							if( !(pmd_none(*pmd) || pmd_bad(*pmd)) )
+							{
+								ptep = pte_offset_map(pmd, addr);
+								if (ptep)
+								{
+									if (!pte_young(*ptep))
+									{
+										if(first_address - addr == 0xd8ba02d0 - 0xd8931940)
+										{
+											printk("function count = %d\n", count_of_function);
+											count_of_function = 0;
+										}
+										//if(   ((first_address & 0xfffff000) <= (instruct_addr &0xfffff000) + 0xd8ba0000 - 0xd892b000)  && ((first_address & 0xfffff000) >= (instruct_addr &0xfffff000) + 0xd8ba0000 - 0xd8936000)  )
+										//if(   ((first_address & 0xfffff000) <= (addr &0xfffff000) + 0xd8ba0000 - 0xd892b000)  && ((first_address & 0xfffff000) >= (addr &0xfffff000) + 0xd8ba0000 - 0xd8939000)  )
+										{
+											count_of_function++;
+											printk("function count = %d\n", count_of_function);
+										}
+									}
+									down_write(&target_mm->mmap_sem);
+									temp_pte = pte_clear_flags(pte, _PAGE_ACCESSED);
+									set_pte(ptep, temp_pte);
+									//ptep_test_and_clear_young(vma, addr, ptep);
+									my_flush_tlb_singlepage(addr);
+									up_write(&target_mm->mmap_sem);
+									if(ptep) pte_unmap(ptep);
+								}
+							}
+						}
+					}
+				}
+			}
+			printk("addr: %08x\n", addr);
+		}
+	}
+}
+
+void my_do_page_fault(struct pt_regs* regs, unsigned long error_code){
+    struct task_struct * task = current;
+    struct mm_struct *mm = task->mm;
+    
+	unsigned long addr = read_cr2();  /* get the page-fault address */
+	unsigned long instruct_addr = regs->ip;//GET_IP(regs);  
+	struct vm_area_struct *vma = mm->mmap;
+	unsigned long virtual_addr;
+	
+	if ( (strcmp(task->comm, "App") != 0 ) )      // not our process
+	{
+		default_do_page_fault(regs, error_code);
+		return;
+	}	
+	
+	if((error_code & 0x10) != 0)   // instruction pages
+	{	
+		//printk("TestProgram No.%d: %08x\n", count++, instruct_addr);
+		if(!flag_first_address)
+		{
+			first_address = instruct_addr;
+			printk("First Addr: %08x\n", first_address);
+			flag_first_address = true;
+			
+			//flag_clear_access_bit = true;
+			//target_mm = current->mm;
+		}
+		
+		previous_instr_addr = instruct_addr;
+		/*if(first_address - instruct_addr == 0xd8ba02d0 - 0xd892d900)
+		{
+			printk("function count = %d\n", count_of_function);
+			int res = 0;
+			switch(count_of_function)
+			{
+				case 1184:
+				case 1186: res = 35; break;
+				case 805:
+				case 806: res = 36; break;
+				case 713:
+				case 714: res = 37; break;
+				case 844:
+				case 845: res = 38; break;
+				case 189: res = 39; break;
+				case 210: res = 40; break;
+				case 236: res = 41; break;
+				case 604: res = 42; break;
+				case 250: res = 43; break;
+				case 226: res = 44; break;
+				case 159: res = 45; break;
+				case 170: res = 46; break;
+				case 329: res = 47; break;
+				case 216: res = 48; break;
+				case 252: res = 49; break;
+				case 308: res = 50; break;
+				case 324: res = 51; break;
+				case 306: res = 52; break;
+				case 394: res = 53; break;
+				case 298: res = 54; break;
+				case 192: res = 55; break;
+				case 337: res = 56; break;
+				case 276: res = 57; break;
+				case 25: res = 58; break;
+				case 150: res = 59; break;
+				case 173: res = 60; break;
+				//case 25: res = 61; break;
+				//case 150: res = 62; break;
+				case 229: res = 63; break;
+				case 674: res = 64; break;
+				case 217: res = 65; break;
+				case 675: res = 66; break;
+				case 377: res = 67; break;
+				case 511: res = 68; break;
+				case 997: res = 69; break;
+				//case 337: res = 70; break;
+				case 289: res = 71; break;
+				case 265: res = 72; break;
+				case 264: res = 73; break;
+				//case 217: res = 74; break;
+				case 316: res = 75; break;
+				case 256: res = 76; break;
+				case 151: res = 77; break;
+				case 245: res = 78; break;
+				case 923: res = 79; break;
+				case 141: res = 80; break;
+				case 452: res = 81; break;
+				case 294: res = 82; break;
+				case 212: res = 83; break;
+				case 251: res = 84; break;
+				//case 329: res = 85; break;
+				case 541: res = 86; break;
+				case 416: res = 87; break;
+				case 208: res = 88; break;
+				case 224: res = 89; break;
+				case 957: res = 90; break;	
+			}
+			//printk("res = %d\n", res);
+			count_of_function = 0;
+		}
+		*/
+		/*if(   ((first_address & 0xfffff000) <= (instruct_addr &0xfffff000) + 0xd8ba0000 - 0xd892b000)  && ((first_address & 0xfffff000) >= (instruct_addr &0xfffff000) + 0xd8ba0000 - 0xd8936000)  )
+		{
+			count_of_function++;
+			//printk("function count = %d\n", count_of_function);
+		}*/
+	}
+	default_do_page_fault(regs, error_code);
+}
+
+static int __init page_fault_init(void)
+{
+    printk("page_fault_init module called...\n");
+	do_page_fault_handler = my_do_page_fault;
+
+	flag_clear_access_bit = true;
+	clear_access_bit();
+
+    return 0;
+}
+
+static void __exit page_fault_exit(void)
+{
+    printk("page_fault_exit module called...\n");
+    do_page_fault_handler = default_do_page_fault;
+
+	flag_clear_access_bit = false;
+}
+
+module_init(page_fault_init);
+module_exit(page_fault_exit);
+MODULE_LICENSE("Dual BSD/GPL");
