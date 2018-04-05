@@ -1,7 +1,3 @@
-We lauched the attack on unmodified libgcrypt with the help of graphene-SGX.
-
-Please put SPM/libgcrypt into the folder: graphene/Libos/shim/test and try to compile libgcrypt. Note that with different compiler versions or configurations the memory layout of the enclave binary may change, so some changes to the addresses need to be made to the SPM attacks code.
-
 We lauched the attack on unmodified libgcrypt with the help of graphene-SGX. So  you may need to compile graphene-SGX successfully to reproduce the attack.
 For example, you need to put SPM/libgcrypt into the folder: graphene/Libos/shim/test and follow the instructions of graphene-sgx: https://github.com/oscarlab/graphene
 
