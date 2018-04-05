@@ -5,8 +5,8 @@ Here is something that may help.
 ----------
 1. The victim source file is  SPMattack/libgcrypt-1.7.6/tests/eddsatest.c. 
 1. Generating sigstruct and the token (https://github.com/oscarlab/graphene/issues/32)
-     ../../../../Pal/src/host/Linux-SGX/signer/pal-sgx-sign -libpal ../../../../Pal/src/libpal-enclave.so -key ../../../../Pal/src/host/Linux-SGX/signer/enclave-key.pem --output eddsatest.manifest.sgx -exec tests/eddsatest -manifest manifest
-     ../../../../Pal/src/host/Linux-SGX/signer/pal-sgx-get-token -output eddsatest.token -sig eddsatest.sig
+../../../../Pal/src/host/Linux-SGX/signer/pal-sgx-sign -libpal ../../../../Pal/src/libpal-enclave.so -key ../../../../Pal/src/host/Linux-SGX/signer/enclave-key.pem --output eddsatest.manifest.sgx -exec tests/eddsatest -manifest manifest
+../../../../Pal/src/host/Linux-SGX/signer/pal-sgx-get-token -output eddsatest.token -sig eddsatest.sig
 1. HOW TO RUN AN APPLICATION IN GRAPHENE: https://github.com/oscarlab/graphene
 
 Note that with different compilers or configurations the target addresses may change, so some changes to the addresses need to be made to the SPM attacks code (please refer to the paper to know which pages are used). 
