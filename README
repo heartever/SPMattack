@@ -1,6 +1,11 @@
+We lauched the attack on unmodified libgcrypt with the help of graphene-SGX.
+
+Please put SPM/libgcrypt into the folder: graphene/Libos/shim/test and try to compile libgcrypt. Note that with different compiler versions or configurations the memory layout of the enclave binary may change, so some changes to the addresses need to be made to the SPM attacks code.
+
+Usange of graphene-sgx:
+
 https://github.com/oscarlab/graphene/issues/32
 
 ../../../../Pal/src/host/Linux-SGX/signer/pal-sgx-sign -libpal ../../../../Pal/src/libpal-enclave.so -key ../../../../Pal/src/host/Linux-SGX/signer/enclave-key.pem -output eddsatest.manifest.sgx -exec tests/eddsatest -manifest manifest
-
 
 ../../../../Pal/src/host/Linux-SGX/signer/pal-sgx-get-token -output eddsatest.token -sig eddsatest.sig
