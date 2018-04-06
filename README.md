@@ -11,5 +11,9 @@ For example, you need to put SPM/libgcrypt into the folder: graphene/Libos/shim/
 
 Note that with different compilers or configurations the target addresses may change, so some changes to the addresses need to be made to the SPM attacks code (please refer to [our paper](https://heartever.github.io/files/leaky.pdf) to know which pages are used). 
 
-Then you could load the kernel module, run the victim program and unload the kernel module.
+How to run the kernel module
+---
+We hooked the default page fault handler by modifying `linux/arch/x86/mm/fault.c`. Please look into the modifed `fault.c` for kernel version 4.2.8. Similar changes can be made to other kernel version. Then recompile and boot into the new kernel. 
+
+Now you could load the kernel module, run the victim program and unload the kernel module.
 Use `dmesg` to find the output of the kernel module.
