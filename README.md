@@ -6,9 +6,10 @@ Put SPM/libgcrypt into the folder: graphene/Libos/shim/test and follow the instr
 
 * The victim source file is  SPMattack/libgcrypt-1.7.6/tests/eddsatest.c. 
 * Generating sigstruct and the token (https://github.com/oscarlab/graphene/issues/32)
-  * ../../../../Pal/src/host/Linux-SGX/signer/pal-sgx-sign -libpal ../../../../Pal/src/libpal-enclave.so -key
-  * ../../../../Pal/src/host/Linux-SGX/signer/enclave-key.pem --output eddsatest.manifest.sgx -exec tests/eddsatest -manifest manifest
-  * ../../../../Pal/src/host/Linux-SGX/signer/pal-sgx-get-token -output eddsatest.token -sig eddsatest.sig
+```
+../../../../Pal/src/host/Linux-SGX/signer/pal-sgx-sign -libpal ../../../../Pal/src/libpal-enclave.so -key ../../../../Pal/src/host/Linux-SGX/signer/enclave-key.pem --output eddsatest.manifest.sgx -exec tests/eddsatest -manifest manifest
+../../../../Pal/src/host/Linux-SGX/signer/pal-sgx-get-token -output eddsatest.token -sig eddsatest.sig
+```
 * HOW TO RUN AN APPLICATION IN GRAPHENE: https://github.com/oscarlab/graphene
 
 Note that with different compilers or configurations the target addresses may change, so some changes to the addresses need to be made to the SPM attacks code (please refer to [our paper](https://heartever.github.io/files/leaky.pdf) to know which pages are used). 
