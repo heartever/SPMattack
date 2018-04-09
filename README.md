@@ -1,7 +1,7 @@
 We lauched the attack on unmodified libgcrypt with the help of graphene-SGX. So you may need to compile graphene-SGX successfully to reproduce the attack.
 
-How to run the victim library with graphene-SGX
----
+## How to run the victim library with graphene-SGX
+
 Put SPM/libgcrypt into the folder: graphene/Libos/shim/test and follow the instructions of [graphene-sgx](https://github.com/oscarlab/graphene). Here is something that may help.
 
 * The victim source file is  SPMattack/libgcrypt-1.7.6/tests/eddsatest.c. 
@@ -14,8 +14,8 @@ Put SPM/libgcrypt into the folder: graphene/Libos/shim/test and follow the instr
 
 Note that with different compilers or configurations the target addresses may change, so some changes to the addresses need to be made to the SPM attacks code (please refer to [our paper](https://heartever.github.io/files/leaky.pdf) to know which pages are used). 
 
-How to run the kernel module
----
+## How to run the kernel module
+
 We hooked the default page fault handler by modifying `linux/arch/x86/mm/fault.c`. Please look into the modifed `fault.c` for kernel version 4.2.8. Similar changes can be made to other kernel version. Then recompile and boot into the new kernel. 
 
 Now you could load the kernel module, run the victim program and unload the kernel module.
