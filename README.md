@@ -4,8 +4,9 @@ We lauched the attack on unmodified libgcrypt with the help of graphene-SGX. So 
 
 Put SPM/libgcrypt into the folder: graphene/Libos/shim/test and follow the instructions of [graphene-sgx](https://github.com/oscarlab/graphene). Here is something that may help.
 
-* The victim source file is  SPMattack/libgcrypt-1.7.6/tests/eddsatest.c. First compile the libcrypt-1.7.6 binary with `make`.
-* Generating sigstruct and the token (https://github.com/oscarlab/graphene/issues/32).
+* The victim source file is  SPMattack/libgcrypt-1.7.6/tests/eddsatest.c. 
+* Compile the libcrypt-1.7.6 binary with `make`.
+* Generate sigstruct and the token (https://github.com/oscarlab/graphene/issues/32). Change to the directory `graphene/LibOS/shim/test/libgcrypt-1.7.6` and run
 ```
 ../../../../Pal/src/host/Linux-SGX/signer/pal-sgx-sign -libpal ../../../../Pal/src/libpal-enclave.so -key ../../../../Pal/src/host/Linux-SGX/signer/enclave-key.pem -output eddsatest.manifest.sgx -exec tests/eddsatest -manifest manifest
 ../../../../Pal/src/host/Linux-SGX/signer/pal-sgx-get-token -output eddsatest.token -sig eddsatest.sig
