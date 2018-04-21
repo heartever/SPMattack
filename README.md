@@ -1,3 +1,4 @@
+This is the code for our Sneaky Page Monitoring (SPM) attack published at ACM CCS 2017: Leaky Cauldron on the Dark Land: Understanding Memory Side-Channel Hazards in SGX.
 We lauched the attack on unmodified libgcrypt with the help of graphene-SGX. So you may need to compile graphene-SGX successfully to reproduce the attack.
 
 ## How to run the victim library with graphene-SGX
