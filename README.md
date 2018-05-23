@@ -24,3 +24,13 @@ We hooked the default page fault handler by modifying `linux/arch/x86/mm/fault.c
 
 Now you could load the kernel module, run the victim program and unload the kernel module.
 Use `dmesg` to find the output of the kernel module.
+
+## Possible Compiling Issues
+* sched_setaffinity undefined! 
+
+It's possibly due to that in some kernel versions "sched_setaffinity" is not exported.
+Please modify the kernel source in "kernel/sched/core.c" and locate the definition of sched_setaffinity. Then add "EXPORT_SYMBOL(sched_setaffinity);" and recompile the kernel. So that it can be referenced in a kernel module.
+
+* Incompatible pointer type
+
+Please try to modify the function type definition to: ``static inline void check_accessed(void *);`` and ``static inline int clear_accessed_thread(void *data)``.
