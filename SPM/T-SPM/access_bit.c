@@ -141,16 +141,6 @@ static inline void clear_accessed_thread(void)
     {
       continue;
     }
-    /*
-    pgd = pgd_offset(mm, addr3);
-  	pud = pud_offset(pgd, addr3);
-  	pmd = pmd_offset(pud, addr3);
-  	ptep3 = pte_offset_map(pmd, addr3);
-  		
-    if(!pte_young(*ptep3)) 
-    {
-      continue;
-    }*/
 	       
 		pgd = pgd_offset(mm, addr);
 		if( !(pgd_none(*pgd) || pgd_bad(*pgd)) )
@@ -204,77 +194,7 @@ static void inline check_accessed(void)
  	pte_t pte1a;
 	pte_t *ptep1a;
   struct mm_struct *mm = target_task->mm;
-// while(1)
-// {
-/*   if(unlikely(!flag_get_target_task) )
-		{
-			for_each_process(target_task)
-			{
-				if ( (strcmp(target_task->comm, "pal-Linux-SGX") == 0 ) )      // not our process
-				{
-					flag_get_target_task = true;
-					printk("base address: %p\n", enclave_baseaddr_App);
-					addr = enclave_baseaddr_App+0xb0e8000;
-					
-					break;
-				}
-			}
-			msleep(15); 
-			continue;
-		}
-		
-		if(!target_task) break;
-		
-		struct mm_struct *mm = target_task->mm;
-		if(!mm) break;
-		
-	//printk("time: %lld\n", rdtsc());	
 
-addr = enclave_baseaddr_App+0xb0e8000;	
-	pgd = pgd_offset(mm, addr);
-	pud = pud_offset(pgd, addr);
-	pmd = pmd_offset(pud, addr);
-	ptep = pte_offset_map(pmd, addr);
-		
-	if(pte_young(*ptep))
-		set_pte(ptep, pte_mkold(*ptep));
-	else
-		continue;
-   
-  
-  addr = enclave_baseaddr_App+0xb0f0000;	
-	pgd = pgd_offset(mm, addr);
-	pud = pud_offset(pgd, addr);
-	pmd = pmd_offset(pud, addr);
-	ptep = pte_offset_map(pmd, addr);
-		
-  if(!pte_young(*ptep)) 
-  {
-    return;
-  }
-  set_pte(ptep, pte_mkold(*ptep));
-  
-	addr = enclave_baseaddr_App+0xb0ef000;	
-	pgd = pgd_offset(mm, addr);
-	pud = pud_offset(pgd, addr);
-	pmd = pmd_offset(pud, addr);
-	ptep = pte_offset_map(pmd, addr);
-		
-  if(pte_young(*ptep))
-	//if(pte_young(*ptep))
-	//	set_pte(ptep, pte_mkold(*ptep));
-	//else
-	//	return; 
-	
-	//printk("Word %d: ===============\n", ++j);
-	{
-		result[tt++] = rdtsc();
-		set_pte(ptep, pte_mkold(*ptep));
-	}else
- {
-   result[tt++] = 0;
- }
-*/
  for(addr = enclave_baseaddr_App+0xb000000; addr <= enclave_baseaddr_App+0xb1ff000; addr += 0x1000)
 	{
 		pgd = pgd_offset(mm, addr);
