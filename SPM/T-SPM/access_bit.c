@@ -86,7 +86,6 @@ static inline void my_flush_tlb_allpages(void *info)
     unsigned long val;
    	asm volatile("mov %%cr3, %0" : "=r" (val));
 }
-static inline void check_accessed(void);
 
 static inline void clear_accessed_thread(void)
 {
@@ -158,7 +157,6 @@ static inline void clear_accessed_thread(void)
 						
 						if(pte_young(pte1a))
 						{
-							 //check_accessed();
                
                				result[tt++] = rdtsc();
                				ndelay(2000);
