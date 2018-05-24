@@ -181,37 +181,6 @@ static inline void clear_accessed_thread(void)
 
 int j = 0;
 
-static void inline check_accessed(void)
-{
-	pgd_t *pgd;
-	pte_t *ptep, pte, temp_pte;
-	pud_t *pud;
-	pmd_t *pmd;
-	
-	unsigned long tmp[100];
-	int i, cc = 0;
-	unsigned long addr;
- 	pte_t pte1a;
-	pte_t *ptep1a;
-  struct mm_struct *mm = target_task->mm;
-
- for(addr = enclave_baseaddr_App+0xb000000; addr <= enclave_baseaddr_App+0xb1ff000; addr += 0x1000)
-	{
-		pgd = pgd_offset(mm, addr);
-		pud = pud_offset(pgd, addr);
-		pmd = pmd_offset(pud, addr);
-		ptep = pte_offset_map(pmd, addr);
-		if(pte_young(*ptep))
-		{	
-//			result[tt++] = addr;
-//			printk("No. %d, addr: %p\n", count++, addr);
-			set_pte(ptep, pte_mkold(*ptep));
-		}
-//		pte_unmap(ptep);
-	}
-//	}
-}
-
 static void clear_accessed(void)
 {	
 	int err;
